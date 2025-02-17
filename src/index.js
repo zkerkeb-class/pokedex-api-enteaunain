@@ -34,8 +34,63 @@ app.use(express.json());
 app.use('/assets', express.static(path.join(__dirname, '../assets')));
 
 // Route GET de base
+app.get("/api/pokemons/types", (req, res) => {
+    res.status(200).send({
+      types: [
+        "fire",
+        "water",
+        "grass",
+        "electric",
+        "ice",
+        "fighting",
+        "poison",
+        "ground",
+        "flying",
+        "psychic",
+        "bug",
+        "rock",
+        "ghost",
+        "dragon",
+        "dark",
+        "steel",
+        "fairy",
+      ]
+    });
+  });
+  
+  app.get("/", (req, res) => {
+    res.send("bienvenue sur l'API Pokémon");
+  });
+
+// Route GET de base
 app.get('/api/pokemons', (req, res) => {
     res.json(pokemonsList);
+});
+
+app.get('/api/pokemons/:id', (req, res) => {
+    const id = parseInt(req.params.id);
+    const pokemon = pokemonsList.find((p) => p.id === id);
+
+    if (pokemon) {
+        res.json(pokemon);
+    } else {
+        res.status(404).json({ message: `Le pokémon #${id} n'existe pas` });
+    }
+});
+
+app.post('/api/pokemons', (req, res) => {
+    const newPokemon = req.body;
+    pokemonsList.push(newPokemon);
+    res.status(200).json(newPokemon);
+});
+
+app.patch('/api/pokemons/:id', (req, res) => {
+    const id = parseInt(req.params.id);
+    const updatedPokemon = req.body;
+
+    let pokemon = pokemonsList.find((p) => p.id === id);
+    pokemonsList[id - 1] = { ...pokemon, ...updatedPokemon };
+    res.status(200).json(pokemonsList[id - 1]);
 });
 
 // Démarrage du serveur
