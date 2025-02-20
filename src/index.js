@@ -67,6 +67,7 @@ app.get('/api/pokemons', (req, res) => {
     res.json(pokemonsList);
 });
 
+// GET pokémon en particulier
 app.get('/api/pokemons/:id', (req, res) => {
     const id = parseInt(req.params.id);
     const pokemon = pokemonsList.find((p) => p.id === id);
@@ -78,19 +79,40 @@ app.get('/api/pokemons/:id', (req, res) => {
     }
 });
 
+// Créer un nouveau pokémon
 app.post('/api/pokemons', (req, res) => {
     const newPokemon = req.body;
     pokemonsList.push(newPokemon);
     res.status(200).json(newPokemon);
 });
 
+// Mettre à jour un pokémon
 app.patch('/api/pokemons/:id', (req, res) => {
     const id = parseInt(req.params.id);
     const updatedPokemon = req.body;
 
     let pokemon = pokemonsList.find((p) => p.id === id);
-    pokemonsList[id - 1] = { ...pokemon, ...updatedPokemon };
-    res.status(200).json(pokemonsList[id - 1]);
+
+    if(pokemon){
+      pokemonsList[id - 1] = req.body;
+      res.status(200).json(pokemonsList[id - 1]);
+    }else{
+      res.status(404).json({ message: `Le pokémon #${id} n'existe pas` });
+    }
+    
+});
+
+// Delete un pokémon
+app.delete('/api/pokemons/:id', (req, res) =>{
+  const id = parseInt(req.params.id);
+  
+  let pokemon = pokemonsList.find((p) => p.id === id);
+  if(pokemon){
+    pokemonsList.splice(id-1,1);
+    res.status(200).json(pokemon);
+  }else{
+    res.status(404).json({ message: `Le pokémon #${id} n'existe pas` });
+  }
 });
 
 // Démarrage du serveur
