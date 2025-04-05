@@ -3236,5 +3236,27 @@
       "Speed": 100
     },
     "image": "http://localhost:3000/assets/pokemons/151.png"
+  },
+  {
+    "id": 152,
+    "name": {
+      "english": "Antonin",
+      "japanese": "フシギダネ",
+      "chinese": "妙蛙种子",
+      "french": "AntoniN"
+    },
+    "type": [
+      "Dark",
+      "Gosse"
+    ],
+    "base": {
+      "HP": 1000,
+      "Attack": 1000,
+      "Defense": 1000,
+      "Sp. Attack": 1000,
+      "Sp. Defense": 1000,
+      "Speed": 1000
+    },
+    "image": "http://localhost:3000/assets/pokemons/152.jpg"
   }
 ]

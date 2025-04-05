@@ -1,9 +1,10 @@
 import express from 'express';
 import cors from 'cors';
-import pokemonsList from './data/pokemonsList.js';
-import dotenv from 'dotenv';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import saveJson from './utils/saveJson.js';
+import fs from 'fs';
+import dotenv from 'dotenv';
 
 dotenv.config();
 
@@ -15,10 +16,12 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 // __dirname contient le chemin complet du répertoire où se trouve le fichier actuel
 
+const pokemonsList = JSON.parse(
+  fs.readFileSync(path.join(__dirname, "./data/pokemons.json"), "utf8")
+);
+
 const app = express();
 const PORT = 3000;
-
-console.log(process.env);
 
 // Middleware pour CORS
 app.use(cors());
@@ -79,27 +82,38 @@ app.get('/api/pokemons/:id', (req, res) => {
     }
 });
 
+//// RAJOUTER VALIDATION D'ENTREE
+
 // Créer un nouveau pokémon
-app.post('/api/pokemons', (req, res) => {
+app.post('/api/pokemons/', (req, res) => {
     const newPokemon = req.body;
-    pokemonsList.push(newPokemon);
-    res.status(200).json(newPokemon);
+    const newPokemonId = req.body.id;
+    if(pokemonsList.find((p) => p.id === newPokemonId)){
+      res.status(404).json({ message: `Le pokémon #${newPokemonId} existe déjà` });
+    }else{
+      pokemonsList.push(newPokemon);
+      saveJson(pokemonsList, path.join(__dirname, './data/pokemons.json'));
+      res.status(200).json(pokemonsList);
+    }
 });
 
+//// RAJOUTER VALIDATION D'ENTREE
+
 // Mettre à jour un pokémon
-app.patch('/api/pokemons/:id', (req, res) => {
+app.put('/api/pokemons/:id', (req, res) => {
     const id = parseInt(req.params.id);
     const updatedPokemon = req.body;
 
     let pokemon = pokemonsList.find((p) => p.id === id);
+    const indexOfPokemon = pokemonsList.indexOf(pokemon);
 
     if(pokemon){
-      pokemonsList[id - 1] = req.body;
-      res.status(200).json(pokemonsList[id - 1]);
+      pokemonsList.splice(indexOfPokemon, 1, updatedPokemon);
+      saveJson(pokemonsList, path.join(__dirname, './data/pokemons.json'));
+      res.status(200).json(updatedPokemon); // Renvoie le Pokémon mis à jour
     }else{
       res.status(404).json({ message: `Le pokémon #${id} n'existe pas` });
     }
-    
 });
 
 // Delete un pokémon
@@ -108,7 +122,8 @@ app.delete('/api/pokemons/:id', (req, res) =>{
   
   let pokemon = pokemonsList.find((p) => p.id === id);
   if(pokemon){
-    pokemonsList.splice(id-1,1);
+    pokemonsList = pokemonsList.filter((p) => p.id !== id);
+    saveJson(pokemonsList, path.join(__dirname, './data/pokemons.json'));
     res.status(200).json(pokemon);
   }else{
     res.status(404).json({ message: `Le pokémon #${id} n'existe pas` });
