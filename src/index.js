@@ -5,8 +5,12 @@ import { fileURLToPath } from 'url';
 import saveJson from './utils/saveJson.js';
 import fs from 'fs';
 import dotenv from 'dotenv';
+import connectDB from './config/db.js';
+import pokemonRoutes from "./routes/pokemonRoutes.js";
 
 dotenv.config();
+
+connectDB();
 
 // Obtenir le chemin absolu du fichier actuel en utilisant les modules ES
 const __filename = fileURLToPath(import.meta.url);
@@ -21,13 +25,20 @@ const pokemonsList = JSON.parse(
 );
 
 const app = express();
-const PORT = 3000;
+const PORT = process.env.PORT || 3000;
 
 // Middleware pour CORS
 app.use(cors());
 
 // Middleware pour parser le JSON
 app.use(express.json());
+
+// Configuration CORS
+app.use(cors({
+  origin: process.env.FRONTEND_URL || "*",
+  methods: ["GET", "POST", "PUT", "DELETE"],
+  allowedHeaders: ["Content-Type", "Authorization"]
+}));
 
 // Middleware pour servir des fichiers statiques
 // 'app.use' est utilisé pour ajouter un middleware à notre application Express
@@ -61,74 +72,20 @@ app.get("/api/pokemons/types", (req, res) => {
     });
   });
   
-  app.get("/", (req, res) => {
-    res.send("bienvenue sur l'API Pokémon");
-  });
 
-// Route GET de base
-app.get('/api/pokemons', (req, res) => {
-    res.json(pokemonsList);
+// Routes
+app.use("/api/pokemons", pokemonRoutes);
+
+// Route de base
+app.get("/", (req, res) => {
+  res.send("Bienvenue sur l'API Pokémon avec MongoDB");
 });
 
-// GET pokémon en particulier
-app.get('/api/pokemons/:id', (req, res) => {
-    const id = parseInt(req.params.id);
-    const pokemon = pokemonsList.find((p) => p.id === id);
-
-    if (pokemon) {
-        res.json(pokemon);
-    } else {
-        res.status(404).json({ message: `Le pokémon #${id} n'existe pas` });
-    }
+// Démarrage du serveur
+app.listen(PORT, '0.0.0.0', () => {
+  console.log(`Serveur démarré sur http://0.0.0.0:${PORT}`);
 });
 
-//// RAJOUTER VALIDATION D'ENTREE
-
-// Créer un nouveau pokémon
-app.post('/api/pokemons/', (req, res) => {
-    const newPokemon = req.body;
-    const newPokemonId = req.body.id;
-    if(pokemonsList.find((p) => p.id === newPokemonId)){
-      res.status(404).json({ message: `Le pokémon #${newPokemonId} existe déjà` });
-    }else{
-      pokemonsList.push(newPokemon);
-      saveJson(pokemonsList, path.join(__dirname, './data/pokemons.json'));
-      res.status(200).json(pokemonsList);
-    }
-});
-
-//// RAJOUTER VALIDATION D'ENTREE
-
-// Mettre à jour un pokémon
-app.put('/api/pokemons/:id', (req, res) => {
-    const id = parseInt(req.params.id);
-    const updatedPokemon = req.body;
-
-    let pokemon = pokemonsList.find((p) => p.id === id);
-    const indexOfPokemon = pokemonsList.indexOf(pokemon);
-
-    if(pokemon){
-      pokemonsList.splice(indexOfPokemon, 1, updatedPokemon);
-      saveJson(pokemonsList, path.join(__dirname, './data/pokemons.json'));
-      res.status(200).json(updatedPokemon); // Renvoie le Pokémon mis à jour
-    }else{
-      res.status(404).json({ message: `Le pokémon #${id} n'existe pas` });
-    }
-});
-
-// Delete un pokémon
-app.delete('/api/pokemons/:id', (req, res) =>{
-  const id = parseInt(req.params.id);
-  
-  let pokemon = pokemonsList.find((p) => p.id === id);
-  if(pokemon){
-    pokemonsList = pokemonsList.filter((p) => p.id !== id);
-    saveJson(pokemonsList, path.join(__dirname, './data/pokemons.json'));
-    res.status(200).json(pokemon);
-  }else{
-    res.status(404).json({ message: `Le pokémon #${id} n'existe pas` });
-  }
-});
 
 // Démarrage du serveur
 app.listen(PORT, () => {
