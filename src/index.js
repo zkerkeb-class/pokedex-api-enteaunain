@@ -7,6 +7,7 @@ import fs from 'fs';
 import dotenv from 'dotenv';
 import connectDB from './config/db.js';
 import pokemonRoutes from "./routes/pokemonRoutes.js";
+import authRoutes from "./routes/authRoutes.js";
 
 dotenv.config();
 
@@ -45,36 +46,13 @@ app.use(cors({
 // '/assets' est le chemin virtuel où les fichiers seront accessibles
 // 'express.static' est un middleware qui sert des fichiers statiques
 // 'path.join(__dirname, '../assets')' construit le chemin absolu vers le dossier 'assets'
-app.use('/assets', express.static(path.join(__dirname, '../assets')));
-
-// Route GET de base
-app.get("/api/pokemons/types", (req, res) => {
-    res.status(200).send({
-      types: [
-        "fire",
-        "water",
-        "grass",
-        "electric",
-        "ice",
-        "fighting",
-        "poison",
-        "ground",
-        "flying",
-        "psychic",
-        "bug",
-        "rock",
-        "ghost",
-        "dragon",
-        "dark",
-        "steel",
-        "fairy",
-      ]
-    });
-  });
-  
+app.use('/assets', express.static(path.join(__dirname, '../assets')));  
 
 // Routes
 app.use("/api/pokemons", pokemonRoutes);
+
+// Login et Register
+app.use("/api/auth", authRoutes);
 
 // Route de base
 app.get("/", (req, res) => {

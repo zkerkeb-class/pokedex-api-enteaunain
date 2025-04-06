@@ -1,33 +1,73 @@
 import express from 'express';
 import Pokemon from '../models/Pokemon.js';
+import { authMiddleware, adminMiddleware } from '../middleware/authMiddleware.js';
+
 
 const router = express.Router();
 
-// GET - Récupérer tous les pokémons
+// GET - Récupérer tous les pokémons avec pagination
 router.get('/', async (req, res) => {
   try {
-    const pokemons = await Pokemon.find({});
-    res.status(200).json(pokemons);
+    const page = parseInt(req.query.page) || 1; // Page actuelle
+    const limit = parseInt(req.query.limit) || 12; // Nombre de pokémons par page
+    const skip = (page - 1) * limit;
+
+    const pokemons = await Pokemon.find({}).skip(skip).limit(limit);
+    const total = await Pokemon.countDocuments();
+
+    res.status(200).json({
+      pokemons,
+      total,
+      page,
+      totalPages: Math.ceil(total / limit),
+    });
   } catch (error) {
     res.status(500).json({
       message: "Erreur lors de la récupération des pokémons",
-      error: error.message
+      error: error.message,
     });
   }
 });
 
-// GET - Récupérer le nombre de pokémons (placer route statique avant dynamique)
-router.get('/count', async (req, res) => {
-  try {
-    const count = await Pokemon.countDocuments();
-    res.status(200).json({ count });
-  } catch (error) {
-    res.status(500).json({
-      message: "Erreur lors de la récupération du nombre de pokémons",
-      error: error.message
-    });
-  }
+// GET - Récupérer les types de pokémons
+router.get('/types', (req, res) => {
+  res.status(200).send({
+    types: [
+      "fire",
+      "water",
+      "grass",
+      "electric",
+      "ice",
+      "fighting",
+      "poison",
+      "ground",
+      "flying",
+      "psychic",
+      "bug",
+      "rock",
+      "ghost",
+      "dragon",
+      "dark",
+      "steel",
+      "fairy",
+    ]
+  });
 });
+
+// Remplacé avec "total" dans pagination
+
+// // GET - Récupérer le nombre de pokémons (placer route statique avant dynamique)
+// router.get('/count', async (req, res) => {
+//   try {
+//     const count = await Pokemon.countDocuments();
+//     res.status(200).json({ count });
+//   } catch (error) {
+//     res.status(500).json({
+//       message: "Erreur lors de la récupération du nombre de pokémons",
+//       error: error.message
+//     });
+//   }
+// });
 
 // GET - Récupérer un pokémon par son ID
 router.get('/:id', async (req, res) => {
@@ -46,7 +86,7 @@ router.get('/:id', async (req, res) => {
 });
 
 // POST - Créer un nouveau pokémon
-router.post('/', async (req, res) => {
+router.post('/', authMiddleware, adminMiddleware, async (req, res) => {
   try {
     // Vérifier si l'ID existe déjà
     const existingPokemon = await Pokemon.findOne({ id: req.body.id });
@@ -65,7 +105,7 @@ router.post('/', async (req, res) => {
 });
 
 // PUT - Mettre à jour un pokémon
-router.put('/:id', async (req, res) => {
+router.put('/:id', authMiddleware, adminMiddleware, async (req, res) => {
   try {
     const updatedPokemon = await Pokemon.findOneAndUpdate(
       { id: parseInt(req.params.id, 10) },
@@ -85,7 +125,7 @@ router.put('/:id', async (req, res) => {
 });
 
 // DELETE - Supprimer un pokémon
-router.delete('/:id', async (req, res) => {
+router.delete('/:id', authMiddleware, adminMiddleware, async (req, res) => {
   try {
     const deletedPokemon = await Pokemon.findOneAndDelete({ id: req.params.id });
     if (!deletedPokemon) {
