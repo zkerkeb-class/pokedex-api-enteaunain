@@ -23,7 +23,7 @@ const authMiddleware = (req, res, next) => {
 
 // Middleware pour vérifier le rôle de l'utilisateur
 const adminMiddleware = (req, res, next) => {
-  if (req.user.role !== 'admin') {
+  if (req.user.role !== 'admin') {xw
     return res.status(403).json({ message: 'Accès interdit. Rôle administrateur requis.' });
   }
   next();
