@@ -88,6 +88,7 @@ router.get('/:id', async (req, res) => {
 // POST - Créer un nouveau pokémon
 router.post('/', authMiddleware, adminMiddleware, async (req, res) => {
   try {
+    console.log("Requête pour créer un pokémon:", req.body);
     // Vérifier si l'ID existe déjà
     const existingPokemon = await Pokemon.findOne({ id: req.body.id });
     if (existingPokemon) {
@@ -127,12 +128,22 @@ router.put('/:id', authMiddleware, adminMiddleware, async (req, res) => {
 // DELETE - Supprimer un pokémon
 router.delete('/:id', authMiddleware, adminMiddleware, async (req, res) => {
   try {
-    const deletedPokemon = await Pokemon.findOneAndDelete({ id: req.params.id });
+    const pokemonId = parseInt(req.params.id, 10);
+
+    // Supprimer le Pokémon avec l'ID spécifié
+    const deletedPokemon = await Pokemon.findOneAndDelete({ id: pokemonId });
     if (!deletedPokemon) {
       return res.status(404).json({ message: "Pokémon non trouvé" });
     }
+
+    // Décaler les IDs des Pokémon ayant un ID supérieur à celui supprimé
+    await Pokemon.updateMany(
+      { id: { $gt: pokemonId } }, // Trouver les Pokémon avec un ID supérieur
+      { $inc: { id: -1 } } // Décrémenter leur ID de 1
+    );
+
     res.status(200).json({
-      message: "Pokémon supprimé avec succès",
+      message: "Pokémon supprimé avec succès et IDs mis à jour",
       pokemon: deletedPokemon
     });
   } catch (error) {
